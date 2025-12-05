@@ -1,0 +1,27 @@
+# python cache
+__pycache__/
+*.pyc
+
+# виртуальное окружение
+.venv/
+venv/
+
+# настройки pycharm
+.idea/
+
+# системные файлы mac и windows
+.DS_Store
+Thumbs.db
+
+# файлы с секретами окружения
+.env
+*.env
+
+# логи
+*.log
+
+# собранные статические файлы
+staticfiles/
+
+# папка с медиа файлами
+media/
