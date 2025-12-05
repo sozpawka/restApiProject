@@ -3,7 +3,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "1_commit_05.12.2025"
+SECRET_KEY = "1_commit_05.12.2025"#проверка
 
 DEBUG = True
 
