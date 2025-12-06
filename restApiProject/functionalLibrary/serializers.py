@@ -40,11 +40,10 @@ class BookSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        # создаём копию объекта: либо новый, либо обновляемый
-        instance = Book(
-            **attrs,
-            id=getattr(self.instance, "id", None)   # важная строка!
-        )
+        instance = self.instance or Book()
+
+        for attr, value in attrs.items():
+            setattr(instance, attr, value)
 
         try:
             instance.full_clean()
