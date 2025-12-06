@@ -1,47 +1,54 @@
 from rest_framework import serializers
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import IntegrityError
 from .models import Author, Book
 
+
 class AuthorSerializer(serializers.ModelSerializer):
+    books = serializers.SerializerMethodField()
+
     class Meta:
         model = Author
-        fields = ["id", "name", "bio", "birth_date"]
+        fields = ["id", "name", "bio", "birth_date", "books"]
+
+    def get_books(self, obj):
+        qs = obj.book_set.all().order_by('title')
+        return [
+            {"id": b.id, "title": b.title, "publication_year": b.publication_year}
+            for b in qs
+        ]
 
 
 class BookSerializer(serializers.ModelSerializer):
-    author_id = serializers.PrimaryKeyRelatedField(
-        queryset=Author.objects.all(), source="author", write_only=True
+    # принимаем имя, возвращаем имя
+    author = serializers.SlugRelatedField(
+        queryset=Author.objects.all(),
+        slug_field="name"
     )
-    author = AuthorSerializer(read_only=True)
 
     class Meta:
         model = Book
         fields = [
-            "id", "title", "author", "author_id",
-            "publication_year", "genre", "category",
-            "publisher", "cover_image", "book_file"
+            "id",
+            "title",
+            "author",
+            "publication_year",
+            "genre",
+            "category",
+            "publisher",
+            "cover_image",
+            "book_file",
         ]
 
-    def create(self, validated_data):
-        book = Book(**validated_data)
-        try:
-            book.full_clean()  # вся логика в модели
-            book.save()
-            return book
-        except DjangoValidationError as e:
-            raise serializers.ValidationError(e.message_dict)
-        except IntegrityError:
-            raise serializers.ValidationError("Такая книга уже есть.")
+    def validate(self, attrs):
+        # создаём копию объекта: либо новый, либо обновляемый
+        instance = Book(
+            **attrs,
+            id=getattr(self.instance, "id", None)   # важная строка!
+        )
 
-    def update(self, instance, validated_data):
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
         try:
             instance.full_clean()
-            instance.save()
-            return instance
         except DjangoValidationError as e:
             raise serializers.ValidationError(e.message_dict)
-        except IntegrityError:
-            raise serializers.ValidationError("Такая книга уже есть.")
+
+        return attrs
